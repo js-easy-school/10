@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Производственный план v8.4</title>
+    <title>Производственный план v8.5</title>
     <style>
         * { box-sizing: border-box; }
         
@@ -132,6 +132,16 @@
             border-radius: 6px;
         }
 
+        .stage-plan-input {
+            width: 70px;
+            padding: 5px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
         .day-input { border-color: #f1c40f; background: #fffdf0; color: #917600; }
         .total-input { border-color: #3498db; background: #f0f7ff; color: #1a5a8a; }
         
@@ -254,7 +264,8 @@
                 id: Date.now() + Math.random(),
                 name: stage,
                 time: time,
-                isEnabled: true
+                isEnabled: true,
+                customPlan: null 
             });
 
             save();
@@ -273,6 +284,39 @@
             render();
         }
 
+        function updateStagePlan(s, d, id, val) {
+            const st = db[s][d].stages.find(x => x.id === id);
+            if (st) {
+                const num = parseInt(val);
+                st.customPlan = isNaN(num) ? null : num;
+                
+                // Проверка: если у всех активных этапов план одинаковый, 
+                // обновляем общий dayPlan устройства
+                checkAndSyncDevicePlan(s, d);
+                
+                save();
+                render();
+            }
+        }
+
+        function checkAndSyncDevicePlan(s, d) {
+            const device = db[s][d];
+            const activeStages = device.stages.filter(st => st.isEnabled);
+            if (activeStages.length === 0) return;
+
+            const firstPlan = activeStages[0].customPlan !== null ? activeStages[0].customPlan : device.dayPlan;
+            const allSame = activeStages.every(st => {
+                const p = st.customPlan !== null ? st.customPlan : device.dayPlan;
+                return p === firstPlan;
+            });
+
+            if (allSame) {
+                device.dayPlan = firstPlan;
+                // Сбрасываем кастомные планы в null, так как они теперь равны общему
+                activeStages.forEach(st => st.customPlan = null);
+            }
+        }
+
         function deleteStage(s, d, id) {
             if (!confirm("Удалить этот этап?")) return;
             db[s][d].stages = db[s][d].stages.filter(x => x.id !== id);
@@ -286,6 +330,8 @@
             const st = db[s][d].stages.find(x => x.id === id);
             if (st) {
                 st.isEnabled = !st.isEnabled;
+                // При включении/выключении проверяем синхронизацию плана
+                checkAndSyncDevicePlan(s, d);
                 save();
                 render();
             }
@@ -346,23 +392,39 @@
                     const dev = db[s][d];
                     const unitTime = dev.stages.reduce((acc, x) => acc + (x.isEnabled ? x.time : 0), 0);
                     
-                    tMinsToday += unitTime * dev.dayPlan;
+                    let deviceTimeToday = 0;
+                    dev.stages.forEach(st => {
+                        if (st.isEnabled) {
+                            const currentPlan = st.customPlan !== null ? st.customPlan : dev.dayPlan;
+                            deviceTimeToday += st.time * currentPlan;
+                        }
+                    });
+
+                    tMinsToday += deviceTimeToday;
                     tItemsToday += dev.dayPlan;
                     tMinsAll += unitTime * dev.totalCount;
                     tItemsAll += dev.totalCount;
 
-                    let rows = dev.stages.map(st => `
-                        <tr class="${st.isEnabled ? '' : 'stage-skipped'}">
-                            <td>${st.name}</td>
-                            <td>${st.time} мин</td>
-                            <td style="text-align:right">
-                                <button class="${st.isEnabled ? 'btn-skip' : 'btn-activate'}" onclick="toggleStage('${s}','${d}',${st.id})">
-                                    ${st.isEnabled ? '⏭ Пропустить' : '✅ Включить'}
-                                </button>
-                                <button class="btn-delete" onclick="deleteStage('${s}','${d}',${st.id})">✕</button>
-                            </td>
-                        </tr>
-                    `).join('');
+                    let rows = dev.stages.map(st => {
+                        const currentPlan = st.customPlan !== null ? st.customPlan : dev.dayPlan;
+                        return `
+                            <tr class="${st.isEnabled ? '' : 'stage-skipped'}">
+                                <td>${st.name}</td>
+                                <td>${st.time} мин</td>
+                                <td>
+                                    <input type="number" class="stage-plan-input" 
+                                           value="${currentPlan}" 
+                                           onchange="updateStagePlan('${s}','${d}',${st.id}, this.value)">
+                                </td>
+                                <td style="text-align:right">
+                                    <button class="${st.isEnabled ? 'btn-skip' : 'btn-activate'}" onclick="toggleStage('${s}','${d}',${st.id})">
+                                        ${st.isEnabled ? '⏭ Проп.' : '✅ Вкл.'}
+                                    </button>
+                                    <button class="btn-delete" onclick="deleteStage('${s}','${d}',${st.id})">✕</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
 
                     sHtml += `
                         <div class="device-block">
@@ -373,7 +435,7 @@
 
                             <div class="controls-row">
                                 <div class="input-inline">
-                                    <span class="input-label">План на сегодня:</span>
+                                    <span class="input-label">Общий план сегодня:</span>
                                     <input type="number" class="plan-input day-input" value="${dev.dayPlan}" 
                                            onchange="updatePlan('${s}','${d}','day', this.value)">
                                 </div>
@@ -384,12 +446,12 @@
                                 </div>
                                 <div style="margin-left:auto; text-align:right">
                                     <span class="input-label">Время сегодня:</span><br>
-                                    <strong style="font-size:1.1rem">${unitTime * dev.dayPlan} мин</strong>
+                                    <strong style="font-size:1.1rem">${deviceTimeToday} мин</strong>
                                 </div>
                             </div>
 
                             <table>
-                                <thead><tr><th>Этап</th><th>Время</th><th style="text-align:right">Опции</th></tr></thead>
+                                <thead><tr><th>Этап</th><th>Время</th><th>План (шт)</th><th style="text-align:right">Опции</th></tr></thead>
                                 <tbody>${rows}</tbody>
                             </table>
                         </div>
