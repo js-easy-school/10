@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Производственный план v8.1 (Расчет общего плана)</title>
+    <title>Производственный план v8.4</title>
     <style>
         * { box-sizing: border-box; }
         
@@ -12,7 +12,7 @@
             background: #f4f7f6; 
             padding: 15px; 
             color: #333; 
-            padding-bottom: 160px; /* Увеличил отступ для высокого подвала */
+            padding-bottom: 160px; 
             margin: 0;
             -webkit-tap-highlight-color: transparent;
         }
@@ -33,7 +33,7 @@
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
             gap: 10px; 
             margin-bottom: 20px; 
-            background: #fff; 
+            background: #f9f9f9; 
             padding: 15px; 
             border-radius: 10px; 
             border: 1px solid #e0e0e0; 
@@ -48,34 +48,32 @@
             width: 100%;
         }
         
-        input:focus { border-color: #3498db; }
+        input:focus { border-color: #3498db; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
         
         .btn { 
             cursor: pointer; 
-            padding: 14px 16px; 
+            padding: 12px 16px; 
             border-radius: 8px; 
             border: none; 
             font-weight: 600; 
             transition: 0.2s; 
-            font-size: 16px;
-            min-height: 48px;
+            font-size: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            white-space: nowrap;
         }
         
         .btn:active { transform: scale(0.98); }
         .btn-add { background: #27ae60; color: white; }
-        .btn-delete { background: #e74c3c; color: white; padding: 8px 12px; font-size: 14px; min-height: auto; }
-        .btn-skip { background: #ff9800; color: white; padding: 8px 12px; font-size: 14px; min-height: auto; }
-        .btn-activate { background: #4CAF50; color: white; padding: 8px 12px; font-size: 14px; min-height: auto; }
+        .btn-delete { background: #e74c3c; color: white; padding: 6px 10px; font-size: 13px; }
+        .btn-skip { background: #f39c12; color: white; padding: 6px 10px; font-size: 13px; }
+        .btn-activate { background: #2ecc71; color: white; padding: 6px 10px; font-size: 13px; }
         .btn-backup { background: #3498db; color: white; }
         .btn-import { background: #8e44ad; color: white; }
 
         .shipment-block { 
-            border: 1px solid #3498db; 
+            border: 2px solid #3498db; 
             margin-top: 25px; 
             border-radius: 10px; 
             overflow: hidden; 
@@ -85,10 +83,9 @@
         .shipment-header { 
             background: #3498db; 
             color: white; 
-            padding: 15px; 
+            padding: 12px 15px; 
             margin: 0; 
-            font-size: clamp(1.1em, 3vw, 1.3em); 
-            word-break: break-word;
+            font-size: 1.2rem;
         }
         
         .device-block { 
@@ -98,27 +95,62 @@
             border-radius: 8px; 
             background: #fafafa; 
         }
-        
-        .day-plan-input { 
-            background: #fff9c4; 
-            border: 2px solid #fbc02d; 
-            font-weight: bold; 
-            width: 80px; 
-            text-align: center; 
-            font-size: 16px;
-            padding: 10px;
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .input-inline {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #7f8c8d;
+            text-transform: uppercase;
         }
         
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 15px; }
-        th { background: #f8f9fa; color: #95a5a6; font-size: 0.9em; font-weight: 600; }
+        .plan-input { 
+            font-weight: bold; 
+            width: 90px; 
+            text-align: center; 
+            font-size: 18px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+        }
 
-        .stage-skipped td { text-decoration: line-through; color: #9e9e9e; }
+        .day-input { border-color: #f1c40f; background: #fffdf0; color: #917600; }
+        .total-input { border-color: #3498db; background: #f0f7ff; color: #1a5a8a; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: #95a5a6; font-size: 12px; text-transform: uppercase; }
 
-        .summary-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-        .badge-style { padding: 10px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; color: white; }
-        .badge-unit { background: #01579b; }
-        .badge-plan { background: #ff6f00; }
+        .stage-skipped td { text-decoration: line-through; color: #bdc3c7; }
+
+        .badge-info { 
+            display: inline-block;
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 12px; 
+            background: #eef2f3; 
+            color: #34495e;
+            border: 1px solid #d1d8dd;
+        }
 
         .summary-footer { 
             position: fixed; 
@@ -126,78 +158,79 @@
             background: #2c3e50; 
             color: white; 
             padding: 15px; 
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
             z-index: 1000; 
-            display: flex; 
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
         }
 
-        .summary-row {
+        .summary-content {
+            max-width: 1100px;
+            margin: 0 auto;
             display: flex;
-            gap: 20px;
+            justify-content: space-around;
             flex-wrap: wrap;
-            justify-content: center;
-            font-size: clamp(0.9em, 3vw, 1.1em);
+            gap: 15px;
         }
 
-        .summary-divider { width: 100%; height: 1px; background: rgba(255,255,255,0.1); }
-        
-        .summary-val { color: #f1c40f; font-weight: bold; }
-        .summary-label { color: #bdc3c7; font-size: 0.9em; text-transform: uppercase; margin-right: 5px;}
+        .summary-item { text-align: center; }
+        .summary-val { display: block; color: #f1c40f; font-size: 1.4rem; font-weight: bold; }
+        .summary-lbl { font-size: 0.7rem; color: #bdc3c7; text-transform: uppercase; }
 
-        .notification {
-            position: fixed; top: 20px; right: 20px;
-            background: #2ecc71; color: white;
-            padding: 12px 20px; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 9999; display: none;
-        }
-
-        @media (max-width: 768px) {
-            body { padding-bottom: 180px; }
-            .form-group { grid-template-columns: 1fr; }
-            table { display: block; overflow-x: auto; }
+        @media (max-width: 600px) {
+            .controls-row { flex-direction: row; justify-content: space-between; }
+            .plan-input { width: 80px; }
+            .summary-val { font-size: 1.1rem; }
         }
     </style>
 </head>
 <body>
-    <div class="notification" id="notification"></div>
+    <div class="notification" id="notification" style="position:fixed; top:20px; right:20px; padding:15px 25px; border-radius:8px; color:white; z-index:2000; display:none;"></div>
 
     <div class="container">
-        <h1>🏭 Производственная логистика</h1>
+        <h1>🏭 Управление производством</h1>
 
         <div class="form-group">
             <input type="text" id="shipmentName" placeholder="📦 Поставка" autocomplete="off">
             <input type="text" id="deviceName" placeholder="📱 Устройство" autocomplete="off">
-            <input type="text" id="stageName" placeholder="🛠 Название этапа" autocomplete="off">
-            <input type="number" id="stageTime" placeholder="⏱ Мин" min="0">
-            <input type="number" id="totalCount" placeholder="🎯 Общий план" min="0">
-            <button class="btn btn-add" onclick="addData()"> Добавить </button>
+            <input type="text" id="stageName" placeholder="🛠 Этап (напр. Сборка)" autocomplete="off">
+            <input type="number" id="stageTime" placeholder="⏱ Минуты" min="1">
+            <input type="number" id="totalCount" placeholder="🎯 План (шт)" min="1">
+            <button class="btn btn-add" onclick="addData()">Добавить</button>
         </div>
 
-        <div style="display: flex; gap:10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+        <div style="display: flex; gap:10px; flex-wrap: wrap; justify-content: center; margin-bottom: 25px;">
             <button class="btn btn-backup" onclick="exportJSON()">💾 Экспорт</button>
             <button class="btn btn-import" onclick="document.getElementById('fileInput').click()">📂 Импорт</button>
             <input type="file" id="fileInput" accept=".json" onchange="importJSON(event)" style="display:none">
-            <button class="btn" style="background:#95a5a6; color:white" onclick="clearData()">🗑 Очистить</button>
+            <button class="btn" style="background:#bdc3c7; color:white" onclick="clearData()">🗑 Очистить всё</button>
         </div>
 
         <div id="dataOutput"></div>
     </div>
 
-    <div class="summary-footer" id="finalSummary"></div>
+    <footer class="summary-footer">
+        <div class="summary-content" id="finalSummary"></div>
+    </footer>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('assemblyData')) || {};
+        let db = {};
 
-        function showNotification(message, type = 'success') {
+        function load() {
+            try {
+                const saved = localStorage.getItem('assemblyData');
+                if (saved) db = JSON.parse(saved);
+            } catch (e) { db = {}; }
+        }
+
+        function save() {
+            localStorage.setItem('assemblyData', JSON.stringify(db));
+        }
+
+        function notify(msg, err = false) {
             const n = document.getElementById('notification');
-            n.textContent = message;
+            n.textContent = msg;
+            n.style.background = err ? '#e74c3c' : '#2ecc71';
             n.style.display = 'block';
-            n.style.background = type === 'error' ? '#e74c3c' : '#2ecc71';
-            setTimeout(() => { n.style.display = 'none'; }, 3000);
+            setTimeout(() => n.style.display = 'none', 2000);
         }
 
         function addData() {
@@ -207,173 +240,174 @@
             const time = parseInt(document.getElementById('stageTime').value);
             const total = parseInt(document.getElementById('totalCount').value) || 0;
 
-            if (!s || !d || !stage || isNaN(time) || time <= 0) { 
-                showNotification("Заполните поля!", 'error');
-                return; 
+            if (!s || !d || !stage || isNaN(time)) {
+                notify("Заполните все поля!", true);
+                return;
             }
 
             if (!db[s]) db[s] = {};
             if (!db[s][d]) db[s][d] = { stages: [], totalCount: total, dayPlan: 0 };
             
-            // Если ввели новый общий план для существующего устройства, обновляем его
             if (total > 0) db[s][d].totalCount = total;
 
-            db[s][d].stages.push({ 
-                id: Date.now() + Math.random(), 
-                name: stage, 
-                time: time, 
-                isEnabled: true 
+            db[s][d].stages.push({
+                id: Date.now() + Math.random(),
+                name: stage,
+                time: time,
+                isEnabled: true
             });
-            
-            saveAndRender();
+
+            save();
+            render();
             document.getElementById('stageName').value = '';
             document.getElementById('stageTime').value = '';
-            showNotification("Добавлено");
+            notify("Этап добавлен");
         }
 
-        function toggleStageEnable(s, d, stageId) {
-            const stage = db[s][d].stages.find(st => st.id === stageId);
-            if (stage) {
-                stage.isEnabled = !stage.isEnabled;
-                saveAndRender();
+        function updatePlan(s, d, type, val) {
+            if (!db[s] || !db[s][d]) return;
+            const num = parseInt(val) || 0;
+            if (type === 'day') db[s][d].dayPlan = num;
+            if (type === 'total') db[s][d].totalCount = num;
+            save();
+            render();
+        }
+
+        function deleteStage(s, d, id) {
+            if (!confirm("Удалить этот этап?")) return;
+            db[s][d].stages = db[s][d].stages.filter(x => x.id !== id);
+            if (db[s][d].stages.length === 0) delete db[s][d];
+            if (Object.keys(db[s]).length === 0) delete db[s];
+            save();
+            render();
+        }
+
+        function toggleStage(s, d, id) {
+            const st = db[s][d].stages.find(x => x.id === id);
+            if (st) {
+                st.isEnabled = !st.isEnabled;
+                save();
+                render();
             }
         }
 
-        function updateDayPlan(s, d, val) {
-            db[s][d].dayPlan = parseInt(val) || 0;
-            saveAndRender();
-        }
-
-        function deleteStage(s, d, stageId) {
-            if (confirm(`Удалить этап?`)) {
-                db[s][d].stages = db[s][d].stages.filter(st => st.id !== stageId);
-                if (db[s][d].stages.length === 0) delete db[s][d];
-                if (Object.keys(db[s]).length === 0) delete db[s];
-                saveAndRender();
+        function clearData() {
+            if (confirm("Удалить вообще все данные?")) {
+                db = {};
+                save();
+                render();
             }
         }
 
         function exportJSON() {
-            const dataStr = JSON.stringify(db, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `prod_plan_${new Date().toISOString().slice(0,10)}.json`;
-            link.click();
-            showNotification("Экспортировано");
+            const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `plan_${new Date().toLocaleDateString()}.json`;
+            a.click();
         }
 
-        function importJSON(event) {
-            const file = event.target.files[0];
+        function importJSON(e) {
+            const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (ev) => {
                 try {
-                    db = JSON.parse(e.target.result);
-                    saveAndRender();
-                    showNotification("Импортировано");
-                } catch (err) { showNotification("Ошибка файла", 'error'); }
+                    db = JSON.parse(ev.target.result);
+                    save();
+                    render();
+                    notify("Данные загружены");
+                } catch(err) { notify("Ошибка файла", true); }
             };
             reader.readAsText(file);
-        }
-
-        function clearData() {
-            if (confirm("Очистить всё?")) { db = {}; saveAndRender(); }
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('assemblyData', JSON.stringify(db));
-            render();
+            e.target.value = '';
         }
 
         function render() {
-            const out = document.getElementById('dataOutput');
-            const summaryDiv = document.getElementById('finalSummary');
-            out.innerHTML = '';
-            
+            const container = document.getElementById('dataOutput');
+            const summary = document.getElementById('finalSummary');
+            container.innerHTML = '';
+
             if (Object.keys(db).length === 0) {
-                out.innerHTML = `<p style="text-align:center; color:#95a5a6; padding:40px;">Нет данных</p>`;
-                summaryDiv.innerHTML = '';
+                container.innerHTML = '<p style="text-align:center; color:#95a5a6; margin-top:50px;">Данных пока нет. Добавьте первую позицию выше.</p>';
+                summary.innerHTML = '';
                 return;
             }
-            
-            let totalMinsToday = 0;
-            let totalItemsToday = 0;
-            let totalMinsWholeOrder = 0;
-            let totalItemsWholeOrder = 0;
+
+            let tMinsToday = 0;
+            let tItemsToday = 0;
+            let tMinsAll = 0;
+            let tItemsAll = 0;
 
             for (const s in db) {
                 let sHtml = `<div class="shipment-block"><h2 class="shipment-header">📦 Поставка: ${s}</h2>`;
                 
                 for (const d in db[s]) {
                     const dev = db[s][d];
-                    let unitTime = 0;
-                    let rows = '';
+                    const unitTime = dev.stages.reduce((acc, x) => acc + (x.isEnabled ? x.time : 0), 0);
                     
-                    dev.stages.forEach(st => {
-                        if (st.isEnabled !== false) unitTime += st.time;
-                        
-                        rows += `
-                            <tr class="${st.isEnabled === false ? 'stage-skipped' : ''}">
-                                <td><strong>${st.name}</strong></td>
-                                <td>${st.time} мин</td>
-                                <td>
-                                    <button class="${st.isEnabled === false ? 'btn-activate' : 'btn-skip'}" 
-                                            onclick="toggleStageEnable('${s}', '${d}', ${st.id})">
-                                        ${st.isEnabled === false ? '✅' : '⏭'}
-                                    </button>
-                                    <button class="btn-delete" onclick="deleteStage('${s}', '${d}', ${st.id})">✕</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+                    tMinsToday += unitTime * dev.dayPlan;
+                    tItemsToday += dev.dayPlan;
+                    tMinsAll += unitTime * dev.totalCount;
+                    tItemsAll += dev.totalCount;
 
-                    const dayTime = unitTime * dev.dayPlan;
-                    const wholeTime = unitTime * (dev.totalCount || 0);
-                    
-                    totalMinsToday += dayTime;
-                    totalItemsToday += dev.dayPlan;
-                    totalMinsWholeOrder += wholeTime;
-                    totalItemsWholeOrder += (dev.totalCount || 0);
+                    let rows = dev.stages.map(st => `
+                        <tr class="${st.isEnabled ? '' : 'stage-skipped'}">
+                            <td>${st.name}</td>
+                            <td>${st.time} мин</td>
+                            <td style="text-align:right">
+                                <button class="${st.isEnabled ? 'btn-skip' : 'btn-activate'}" onclick="toggleStage('${s}','${d}',${st.id})">
+                                    ${st.isEnabled ? '⏭ Пропустить' : '✅ Включить'}
+                                </button>
+                                <button class="btn-delete" onclick="deleteStage('${s}','${d}',${st.id})">✕</button>
+                            </td>
+                        </tr>
+                    `).join('');
 
                     sHtml += `
                         <div class="device-block">
-                            <h3 style="margin-top:0">📱 ${d}</h3>
-                            <div class="summary-badges">
-                                <div class="badge-style badge-unit">На 1 шт: ${unitTime} мин</div>
-                                <div class="badge-style badge-plan">Общий план: ${dev.totalCount || 0} шт</div>
-                            </div>
-                            
-                            <div style="margin-bottom:15px; background:#fff; padding:10px; border-radius:6px; border:1px solid #eee;">
-                                <strong>План сегодня:</strong>
-                                <input type="number" class="day-plan-input" value="${dev.dayPlan}" 
-                                       onchange="updateDayPlan('${s}', '${d}', this.value)"> шт.
-                                <span style="margin-left:15px; color:#7f8c8d;">(Всего на сегодня: ${dayTime} мин)</span>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                <h3 style="margin:0">📱 ${d}</h3>
+                                <span class="badge-info">Цикл: ${unitTime} мин</span>
                             </div>
 
-                            <table style="width:100%">${rows}</table>
+                            <div class="controls-row">
+                                <div class="input-inline">
+                                    <span class="input-label">План на сегодня:</span>
+                                    <input type="number" class="plan-input day-input" value="${dev.dayPlan}" 
+                                           onchange="updatePlan('${s}','${d}','day', this.value)">
+                                </div>
+                                <div class="input-inline">
+                                    <span class="input-label">Общий план (🎯):</span>
+                                    <input type="number" class="plan-input total-input" value="${dev.totalCount}" 
+                                           onchange="updatePlan('${s}','${d}','total', this.value)">
+                                </div>
+                                <div style="margin-left:auto; text-align:right">
+                                    <span class="input-label">Время сегодня:</span><br>
+                                    <strong style="font-size:1.1rem">${unitTime * dev.dayPlan} мин</strong>
+                                </div>
+                            </div>
+
+                            <table>
+                                <thead><tr><th>Этап</th><th>Время</th><th style="text-align:right">Опции</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
                         </div>
                     `;
                 }
-                out.innerHTML += sHtml + `</div>`;
+                container.innerHTML += sHtml + '</div>';
             }
 
-            // Рендерим итог в подвале
-            summaryDiv.innerHTML = `
-                <div class="summary-row">
-                    <span><span class="summary-label">СЕГОДНЯ:</span> <span class="summary-val">${totalItemsToday} шт.</span></span>
-                    <span><span class="summary-label">ВРЕМЯ СЕГОДНЯ:</span> <span class="summary-val">${(totalMinsToday/60).toFixed(2)} ч.</span></span>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-row">
-                    <span><span class="summary-label">ВЕСЬ ЗАКАЗ:</span> <span class="summary-val">${totalItemsWholeOrder} шт.</span></span>
-                    <span><span class="summary-label">ВРЕМЯ ЗАКАЗА:</span> <span class="summary-val">${(totalMinsWholeOrder/60).toFixed(1)} ч.</span></span>
-                </div>
+            summary.innerHTML = `
+                <div class="summary-item"><span class="summary-lbl">План сегодня</span><span class="summary-val">${tItemsToday} шт</span></div>
+                <div class="summary-item"><span class="summary-lbl">Часов сегодня</span><span class="summary-val">${(tMinsToday/60).toFixed(2)} ч</span></div>
+                <div class="summary-item" style="border-left: 1px solid #444; padding-left:20px"><span class="summary-lbl">Всего в заказе</span><span class="summary-val">${tItemsAll} шт</span></div>
+                <div class="summary-item"><span class="summary-lbl">Всего часов</span><span class="summary-val">${(tMinsAll/60).toFixed(1)} ч</span></div>
             `;
         }
 
-        document.addEventListener('DOMContentLoaded', render);
+        load();
+        render();
     </script>
 </body>
 </html>
